@@ -2,12 +2,13 @@ const express = require("express");
 const router = express.Router();
 const mysql = require("mysql");
 const con = require("./database");
+const middleware = require("./middleware");
 
 router.get("/", (req, res) => {
   res.send("This boilerplate is working!");
 });
 
-router.post("/register", (req, res) => {
+router.post("/register", middleware.validateUserData, (req, res) => {
   const username = req.body.username.toLowerCase();
   const password = req.body.password;
 
