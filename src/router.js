@@ -45,4 +45,22 @@ router.post("/register", middleware.validateUserData, (req, res) => {
   );
 });
 
+router.post("/login", middleware.validateUserData, (req, res) => {
+  const username = req.body.username.toLowerCase();
+
+  con.query(
+    `SELECT * FROM users WHERE username = ${mysql.escape(username)}`,
+    (err, result) => {
+      if (err || result.length === 0) {
+        console.log(err);
+        return res.status(400).json({
+          msg: "The provided details are incorrect or the user does not exist",
+        });
+      } else {
+        return res.status(200).json({ msg: "You have succesfully logged in." });
+      }
+    }
+  );
+});
+
 module.exports = router;
