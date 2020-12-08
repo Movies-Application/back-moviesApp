@@ -69,7 +69,28 @@ router.post("/login", middleware.validateUserData, (req, res) => {
           msg: "The provided details are incorrect or the user does not exist",
         });
       } else {
-        return res.status(200).json({ msg: "You have succesfully logged in." });
+        bcrypt.compare(
+          req.body.password,
+          result[0].password,
+          (bcryptErr, bcryptResult) => {
+            if (bcryptErr || !bcryptResult) {
+              return res
+                .status(400)
+                .json({ msg: "The provided details is incorrect." });
+            } else {
+              if (bcryptResult) {
+                const token = jwt.sign(
+                  { userId: result[0].id, username: result[0].username },
+                  process.env.SECRETKEY,
+                  { expiresIn: "7d" }
+                );
+                return res
+                  .status(200)
+                  .json({ msg: "You have succesfully logged in.", token });
+              }
+            }
+          }
+        );
       }
     }
   );
