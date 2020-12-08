@@ -3,11 +3,14 @@ const router = express.Router();
 const mysql = require("mysql");
 const con = require("./database");
 const middleware = require("./middleware");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 
 router.get("/", (req, res) => {
   res.send("This boilerplate is working!");
 });
 
+// POST for user registration
 router.post("/register", middleware.validateUserData, (req, res) => {
   const username = req.body.username.toLowerCase();
   const password = req.body.password;
@@ -23,28 +26,37 @@ router.post("/register", middleware.validateUserData, (req, res) => {
       } else if (result.length !== 0) {
         return res.status(400).json({ msg: "Username already exists." });
       } else {
-        con.query(
-          `INSERT INTO users (username, password) VALUES (${mysql.escape(
-            username
-          )}, ${mysql.escape(password)})`,
-          (er, result) => {
-            if (err) {
-              console.log(err);
-              return res
-                .status(400)
-                .json({ msg: "Internal server error saving user details." });
-            } else {
-              return res
-                .status(201)
-                .json({ msg: "New user has been successfully registered!" });
-            }
+        bcrypt.hash(password, 10, (err, hash) => {
+          if (err) {
+            return res
+              .status(400)
+              .json({ msg: "Internal server error hashing user details" });
+          } else {
+            con.query(
+              `INSERT INTO users (username, password) VALUES (${mysql.escape(
+                username
+              )}, ${mysql.escape(hash)})`,
+              (err, result) => {
+                if (err) {
+                  console.log(err);
+                  return res.status(400).json({
+                    msg: "Internal server error saving user details.",
+                  });
+                } else {
+                  return res.status(201).json({
+                    msg: "New user has been successfully registered!",
+                  });
+                }
+              }
+            );
           }
-        );
+        });
       }
     }
   );
 });
 
+// POST for login
 router.post("/login", middleware.validateUserData, (req, res) => {
   const username = req.body.username.toLowerCase();
 
