@@ -1,3 +1,6 @@
+const jwt = require("jsonwebtoken");
+require("dotenv").config();
+
 function usernameLength(username) {
   return username.length < 6 || username.length > 64;
 }
@@ -17,16 +20,27 @@ module.exports = {
     ) {
       return res
         .status(400)
-        .json({ mesg: "Username and password does not follow the rules." });
+        .json({ msg: "Username and password does not follow the rules." });
     } else if (!username || usernameLength(username)) {
       return res
         .status(400)
-        .json({ mesg: "Username does not follow the rules." });
+        .json({ msg: "Username does not follow the rules." });
     } else if (!password || passwordLength(password)) {
       return res
         .status(400)
-        .json({ mesg: "Password does not follow the rules." });
+        .json({ msg: "Password does not follow the rules." });
     }
     next();
+  },
+  isLoggedIn: (req, res, next) => {
+    try {
+      const token = req.headers.authorization.split(" ")[1];
+      const decodedToken = jwt.verify(token, process.env.SECRETKEY);
+      req.userData = decodedToken;
+      next();
+    } catch (err) {
+      console.log(err);
+      return res.status(401).send({ msg: "Your session is invalid" });
+    }
   },
 };
